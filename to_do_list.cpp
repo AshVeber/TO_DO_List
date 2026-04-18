@@ -20,8 +20,8 @@ bool isNumber(const string& s) {
     return true;
 }
 void Menu() {
-    vector<int> nums = {1, 2, 3, 4, 5};
-    vector<string> menu = {"Show tasks", "Add task", "Delete task", "Done tasks", "Exit"};
+    vector<int> nums = {1, 2, 3, 4, 5, 6};
+    vector<string> menu = {"Show tasks", "Add task", "Delete task", "Done tasks", "Show done tasks", "Exit"};
 
     cout << "----------------" << endl;
     for(size_t i = 0; i < nums.size(); ++i) {
@@ -34,6 +34,12 @@ void saveTask(vector<string>& tasks) {
         file << ts << endl;
     }
 }
+void savedoneTask(vector<string>& donetasks) {
+    ofstream file("donetasks.txt");
+    for(string dts : donetasks) {
+        file << dts << endl;
+    }
+}
 vector<string> loadTasks() {
     vector<string> tasks;
     ifstream file("tasks.txt");
@@ -43,6 +49,16 @@ vector<string> loadTasks() {
         tasks.push_back(line);
     }
     return tasks;
+}
+vector<string> loaddoneTasks() {
+    vector<string> donetasks;
+    ifstream file("donetasks.txt");
+    string line0;
+
+    while(getline(file, line0)) {
+        donetasks.push_back(line0);
+    }
+    return donetasks;
 }
 void addfirstTs(vector<string>& tasks) {
     cout << "You do not have tasks." << endl;
@@ -60,10 +76,87 @@ void addTs(vector<string>& tasks) {
     tasks.push_back(task);
     saveTask(tasks);
 }
-void Tasks(vector<string>& tasks) {
+void deleteTask(vector<string>& tasks) {
+    cout << "Which task do ya wanna delete?" << endl;
+    while(true) {
+        cout << ">> ";
+        string dt;
+        cin >> dt;
+        if(isNumber(dt)) {
+            int ddt = stoi(dt);
+            int index = ddt - 1;
+            if(index >= 0 && index < tasks.size()) {
+                tasks.erase(tasks.begin() + index);
+                saveTask(tasks);
+                cout << "Edited!" << endl;
+                this_thread::sleep_for(chrono::seconds(2));
+                break;
+            }
+            else {
+                cout << "Incorrect input." << endl;
+                this_thread::sleep_for(chrono::seconds(2));
+                continue;
+            }
+            
+        }
+        else {
+            cout << "Incorrect input." << endl;
+            this_thread::sleep_for(chrono::seconds(2));
+            continue;
+        }
+    }
+}
+void Tasks(const vector<string>& tasks) {
     cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << endl;
     for(size_t i = 0; i < tasks.size(); ++i) {
         cout << " " << i + 1 << ") " << tasks[i] << endl;
+    }
+    cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << endl;
+    this_thread::sleep_for(chrono::seconds(3));
+}
+void doneTask(vector<string>& donetasks, vector<string>& tasks){
+    if(tasks.empty()) {
+        cout << "You do not have tasks" << endl;
+        this_thread::sleep_for(chrono::seconds(2));
+    }
+    else {
+        Tasks(tasks);
+        cout << "Which task is done?" << endl;
+        while(true) {
+            cout << ">> ";
+            string donet;
+            cin >> donet;
+            if(isNumber(donet)) {
+                int donetask = stoi(donet);
+                int index0 = donetask - 1;
+                if(index0 >= 0 && index0 < tasks.size()) {
+                    donetasks.push_back(tasks[index0]);
+                    tasks.erase(tasks.begin() + index0);
+                    savedoneTask(donetasks);
+                    saveTask(tasks);
+                    cout << "Cool!" << endl;
+                    this_thread::sleep_for(chrono::seconds(2));
+                    break;
+                }
+                else {
+                    cout << "Incorrect input." << endl;
+                    this_thread::sleep_for(chrono::seconds(2));
+                    continue;
+                }
+            }
+            else {
+                cout << "Incorrect input." << endl;
+                this_thread::sleep_for(chrono::seconds(2));
+                continue;
+            }
+        }
+    }
+    
+}
+void doneTasks(vector<string>& donetasks) {
+    cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << endl;
+    for(size_t j = 0; j < donetasks.size(); ++j) {
+        cout << " " << j + 1 << ") " << donetasks[j] << endl;
     }
     cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << endl;
     this_thread::sleep_for(chrono::seconds(3));
@@ -74,10 +167,11 @@ int main() {
     cout << "   TO DO LIST" << endl;
     cout << "================" << endl;
 
+    vector<string> donetasks = loaddoneTasks();
+    vector<string> tasks = loadTasks();
+
     while(true) {
         Menu();
-        vector<string> tasks = loadTasks();
-
         cout << ">> ";
         string input;
         cin >> input;
@@ -98,36 +192,15 @@ int main() {
             }
             else if(iinput == 3) {
                 Tasks(tasks);
-                cout << "Which task do ya wanna delete?" << endl;
-
-                while(true) {
-                    cout << ">> ";
-                    string dt;
-                    cin >> dt;
-                    if(isNumber(dt)) {
-                        int ddt = stoi(dt);
-                        int index = ddt - 1;
-                        if(index >= 0 && index < tasks.size()) {
-                            tasks.erase(tasks.begin() + index);
-                            saveTask(tasks);
-                            break;
-                        }
-                        else {
-                            cout << "Incorrect input." << endl;
-                            this_thread::sleep_for(chrono::seconds(2));
-                            continue;
-                        }
-                        
-                    }
-                    else {
-                        cout << "Incorrect input." << endl;
-                        this_thread::sleep_for(chrono::seconds(2));
-                        continue;
-                    }
-                }
-                
+                deleteTask(tasks);    
+            }
+            else if(iinput == 4) {
+                doneTask(donetasks, tasks);
             }
             else if(iinput == 5) {
+                doneTasks(donetasks);
+            }
+            else if(iinput == 6) {
                 cout << "----------------" << endl;
                 break;
             }

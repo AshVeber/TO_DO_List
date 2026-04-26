@@ -6,6 +6,9 @@
 #include <fstream>
 #include <limits>
 
+struct Task {
+    std::string text;
+};
 bool isNumber(const std::string& s) {
     if(s.empty()) {
         return false;
@@ -22,62 +25,66 @@ void errorMess() {
     std::this_thread::sleep_for(std::chrono::seconds(2));
 }
 void Menu() {
-    std::vector<int> nums = {1, 2, 3, 4, 5, 6};
-    std::vector<std::string> menu = {"Show tasks", "Add task", "Delete task", "Done tasks", "Show done tasks", "Exit"};
+    std::vector<int> nums = {1, 2, 3, 4, 5};
+    std::vector<std::string> menu = {"Show tasks", "Add task", "Delete task", "Done tasks", "Exit"};
 
     std::cout << "----------------" << std::endl;
     for(size_t i = 0; i < nums.size(); ++i) {
         std::cout << nums[i] << ". " << menu[i] << std::endl;
     }
 }
-void Tasks(const std::vector<std::string>& tasks) {
+void Tasks(const std::vector<Task>& tasks) {
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
     for(size_t i = 0; i < tasks.size(); ++i) {
-        std::cout << " " << i + 1 << ") " << tasks[i] << std::endl;
+        std::cout << "[" << i + 1 << "] " << tasks[i].text << std::endl;
     }
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 }
-void saveTask(std::vector<std::string>& tasks) {
+void saveTask(std::vector<Task>& tasks) {
     std::ofstream file("tasks.txt");
-    for(std::string ts : tasks) {
-        file << ts << std::endl;
+    for(const Task& t : tasks) {
+        file << t.text  << std::endl;
     }
 }
-void savedoneTask(std::vector<std::string>& donetasks) {
+void savedoneTask(std::vector<Task>& donetasks) {
     std::ofstream file("donetasks.txt");
-    for(std::string dts : donetasks) {
-        file << dts << std::endl;
+    for(const Task& t : donetasks) {
+        file << t.text << std::endl;
     }
 }
-std::vector<std::string> loadTasks() {
-    std::vector<std::string> tasks;
+std::vector<Task> loadTasks() {
+    std::vector<Task> tasks;
     std::ifstream file("tasks.txt");
     std::string line;
 
     while(getline(file, line)) {
-        tasks.push_back(line);
+        tasks.push_back(Task{line});
     }
     return tasks;
 }
-std::vector<std::string> loaddoneTasks() {
-    std::vector<std::string> donetasks;
+std::vector<Task> loaddoneTasks() {
+    std::vector<Task> donetasks;
     std::ifstream file("donetasks.txt");
     std::string line0;
 
     while(getline(file, line0)) {
-        donetasks.push_back(line0);
+        Task t0;
+        t0.text = line0;
+        donetasks.push_back(t0);
     }
     return donetasks;
 }
-void addTs(std::vector<std::string>& tasks) {
+void addTs(std::vector<Task>& tasks) {
     std::string task;
-    std::cout << ">> ";
+    std::cout << "----------------\nAdd task\n>> ";
     getline(std::cin, task);
-    tasks.push_back(task);
+    Task t;
+    t.text = task;
+    tasks.push_back(t);
     saveTask(tasks);
 }
-void deleteTask(std::vector<std::string>& tasks) {
+void deleteTask(std::vector<Task>& tasks) {
     if(tasks.empty()) {
         std::cout << "You do not have tasks." << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -112,7 +119,7 @@ void deleteTask(std::vector<std::string>& tasks) {
     }
     
 }
-void doneTask(std::vector<std::string>& donetasks, std::vector<std::string>& tasks){
+void doneTask(std::vector<Task>& donetasks, std::vector<Task>& tasks){
     if(tasks.empty()) {
         std::cout << "You do not have tasks" << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -149,22 +156,14 @@ void doneTask(std::vector<std::string>& donetasks, std::vector<std::string>& tas
     }
     
 }
-void doneTasks(std::vector<std::string>& donetasks) {
-    std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
-    for(size_t j = 0; j < donetasks.size(); ++j) {
-        std::cout << " " << j + 1 << ") " << donetasks[j] << std::endl;
-    }
-    std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-}
 
 int main() {
     std::cout << "================" << std::endl;
     std::cout << "   TO DO LIST" << std::endl;
     std::cout << "================" << std::endl;
 
-    std::vector<std::string> donetasks = loaddoneTasks();
-    std::vector<std::string> tasks = loadTasks();
+    std::vector<Task> donetasks = loaddoneTasks();
+    std::vector<Task> tasks = loadTasks();
 
     while(true) {
         Menu();
@@ -195,9 +194,6 @@ int main() {
                 doneTask(donetasks, tasks);
             }
             else if(iinput == 5) {
-                doneTasks(donetasks);
-            }
-            else if(iinput == 6) {
                 std::cout << "----------------" << std::endl;
                 break;
             }

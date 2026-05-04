@@ -1,10 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <thread>
-#include <chrono>
 #include <string>
 #include <fstream>
-#include <limits>
 
 struct Task {
     std::string text;
@@ -12,23 +9,18 @@ struct Task {
 };
 bool isNumber(const std::string& s) {
     if(s.empty()) {
-        return false;
+        return 0;
     }
     for(char const &c : s) {
         if(!(isdigit(c))) {
-            return false;
+            return 0;
         }
     }
-    return true;
-}
-void errorMess() {
-    std::cout << "Incorrect input." << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    return 1;
 }
 void Menu() {
     std::vector<int> nums = {1, 2, 3, 4, 5};
-    std::vector<std::string> menu = {"Show tasks", "Add task", "Delete task", "Done tasks", "Exit"};
-
+    std::vector<std::string> menu = {"Show tasks", "Add task", "Delete task", "Done task", "Exit"};
     std::cout << "----------------" << std::endl;
     for(size_t i = 0; i < nums.size(); ++i) {
         std::cout << nums[i] << ". " << menu[i] << std::endl;
@@ -38,16 +30,13 @@ void Tasks(const std::vector<Task>& tasks) {
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
     for(size_t i = 0; i < tasks.size(); ++i) {
         if(tasks[i].done) {
-            std::cout << "[x] ";
+            std::cout << i + 1 << ". [x] " << tasks[i].text << std::endl;
         } else {
-            std::cout << "[ ] ";
+            std::cout << i + 1 << ". [ ] " << tasks[i].text << std::endl;
         }
-        std::cout << tasks[i].text << std::endl;
     }
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
 }
-
 void saveTask(std::vector<Task>& tasks) {
     std::ofstream file("tasks.txt");
     for(const Task& t : tasks) {
@@ -55,39 +44,46 @@ void saveTask(std::vector<Task>& tasks) {
     }
 }
 void doneTask(std::vector<Task>& tasks){
-    Tasks(tasks);
-    std::cout << "Which task is done?" << std::endl;
     while(true) {
-        std::cout << ">> ";
+        Tasks(tasks);
+        std::cout << "Which task is done? (press 'x' to exit)\n>> ";
         std::string input;
-        std::cin >> input;
-        if(isNumber(input)) {
-            int donetask = stoi(input);
-            int index = donetask - 1;
-            if(index >= 0 && index < tasks.size()) {
-                if(tasks[index].done) {
-                    std::cout << "Your tasks are done!" << std::endl;
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
-                    break;
-                } else {
-                    tasks[index].done = true;
-                    saveTask(tasks);
-                    std::cout << "Cool!" << std::endl;
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
-                    break;
+        std::getline(std::cin, input);
+        char ch = input[0];
+        if(ch == 'x'|| ch == 'X') {
+            break;
+        }else {
+            if(input.empty()) {
+                std::cout << "You did not write anything" << std::endl;
+                continue;
+            }else {
+                if(isNumber(input)) {
+                    int iinput = stoi(input);
+                    int index = iinput - 1;
+                    if(index >= 0 && index < tasks.size()) {
+                        if(tasks[index].done) {
+                            std::cout << "Your tasks are done!" << std::endl;
+                            break;
+                        } else {
+                            tasks[index].done = true;
+                            saveTask(tasks);
+                            std::cout << "Cool!" << std::endl;
+                            break;
+                        }
+                    }
+                    else {
+                        std::cout << "Enter the valid number." << std::endl;
+                        continue;
+                    }
+                }
+                else {
+                    std::cout << "That's not a number." << std::endl;
+                    continue;
                 }
             }
-            else {
-                errorMess();
-                continue;
-            }
         }
-        else {
-            errorMess();
-            continue;
-        }
-    }
-    
+
+    }  
 }
 std::vector<Task> loadTasks() {
     std::vector<Task> tasks;
@@ -114,49 +110,72 @@ std::vector<Task> loadTasks() {
     return tasks;
 }
 void addTs(std::vector<Task>& tasks) {
-    std::string task;
-    std::cout << "----------------\nAdd task\n>> ";
-    getline(std::cin, task);
-    Task t;
-    t.text = task;
-    t.done = false;
-    tasks.push_back(t);
-    saveTask(tasks);
-}
-void deleteTask(std::vector<Task>& tasks) {
-    if(tasks.empty()) {
-        std::cout << "You do not have tasks." << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    } else {
-        Tasks(tasks);
-        std::cout << "Which task do ya wanna delete?" << std::endl;
-        while(true) {
-            std::cout << ">> ";
-            std::string dt;
-            std::cin >> dt;
-            if(isNumber(dt)) {
-                int ddt = stoi(dt);
-                int index = ddt - 1;
-                if(index >= 0 && index < tasks.size()) {
-                    tasks.erase(tasks.begin() + index);
-                    saveTask(tasks);
-                    std::cout << "Edited!" << std::endl;
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
-                    break;
-                }
-                else {
-                    errorMess();
-                    continue;
-                }
-                
-            }
-            else {
-                errorMess();
+    std::string input;
+    while(true) {
+        std::cout << "----------------\nAdd task. (press 'x' to exit)\n>> ";
+        getline(std::cin, input);
+        char ch = input[0];
+        if(ch == 'x' || ch == 'X') {
+            break;
+        }else {
+            if(input.empty()) {
+                std::cout << "You did not write the task." << std::endl;
                 continue;
+            }else 
+            if(isNumber(input)) {
+                std::cout << "That's not a task." << std::endl;
+                continue;
+            }else {
+                Task t;
+                t.text = input;
+                t.done = false;
+                tasks.push_back(t);
+                saveTask(tasks);
+                break;
             }
         }
+
     }
-    
+}
+void deleteTask(std::vector<Task>& tasks) {
+    std::string input;
+    if(tasks.empty()) {
+        std::cout << "You do not have tasks." << std::endl;
+    } else {
+        while(true) {
+            Tasks(tasks);
+            std::cout << "Which task do ya wanna delete? (Press 'x' to exit)\n>> " << std::endl;
+            char ch = input[0];
+            std::getline(std::cin, input);
+            if(ch == 'x' || ch == 'X') {
+                break;
+            }else {
+                if(input.empty()) {
+                    std::cout << "You did not write the task." << std::endl;
+                    continue;
+                }else {
+                    if(isNumber(input)) {
+                        int iinput = stoi(input);
+                        int index = iinput - 1;
+                        if(index >= 0 && index < tasks.size()) {
+                            tasks.erase(tasks.begin() + index);
+                            saveTask(tasks);
+                            std::cout << "Edited!" << std::endl;
+                            break;
+                        }
+                        else {
+                            std::cout << "Enter the valid number." << std::endl;
+                            continue;
+                        } 
+                    }
+                    else {
+                        std::cout << "That's not a number." << std::endl;
+                        continue;
+                    }
+                }
+            }
+        }
+    }  
 }
 
 int main() {
@@ -171,42 +190,42 @@ int main() {
         Menu();
         std::cout << ">> ";
         std::string input;
-        std::cin >> input;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-        if(isNumber(input)) {
-            int iinput = stoi(input);
-
-            if(iinput == 1) {
-                if(tasks.empty()) {
-                    std::cout << "You do not have tasks." << std::endl;
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
-                }else {
-                    Tasks(tasks);
+        std::getline(std::cin, input);
+        if(input.empty()) {
+            std::cout << "You did not write the task." << std::endl;
+            continue;
+        }else {
+            if(isNumber(input)) {
+                int iinput = stoi(input);
+                if(iinput == 1) {
+                    if(tasks.empty()) {
+                        std::cout << "You do not have tasks." << std::endl;
+                    }else {
+                        Tasks(tasks);
+                    }
+                }
+                else if(iinput == 2) {
+                    addTs(tasks);
+                }
+                else if(iinput == 3) {
+                    deleteTask(tasks);    
+                }
+                else if(iinput == 4) {
+                    doneTask(tasks);
+                }
+                else if(iinput == 5) {
+                    std::cout << "----------------" << std::endl;
+                    break;
+                }
+                else {
+                    std::cout << "Enter the valid number." << std::endl;
+                    continue;
                 }
             }
-            else if(iinput == 2) {
-                addTs(tasks);
-            }
-            else if(iinput == 3) {
-                deleteTask(tasks);    
-            }
-            else if(iinput == 4) {
-                doneTask(tasks);
-            }
-            else if(iinput == 5) {
-                std::cout << "----------------" << std::endl;
-                break;
-            }
             else {
-                errorMess();
+                std::cout << "That's not a number." << std::endl;
                 continue;
             }
-            
-        }
-        else {
-            errorMess();
-            continue;
         }
     }
     return 0;

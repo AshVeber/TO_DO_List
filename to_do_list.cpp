@@ -4,10 +4,14 @@
 #include <fstream>
 #include <sstream>
 
+struct Subtask {
+    std::string text;
+    bool done;
+};
 struct Task {
     std::string text;
     bool done;
-    std::vector<std::string> subtasks;
+    std::vector<Subtask> subtasks;
 };
 bool isNumber(const std::string& s) {
     if(s.empty()) {
@@ -34,7 +38,8 @@ void Tasks(const std::vector<Task>& tasks) {
         std::string mark = tasks[i].done ? "[x]" : "[ ]";
         std::cout << i+1 << ". " << mark << " " << tasks[i].text << std::endl;
         for(size_t j = 0; j < tasks[i].subtasks.size(); ++j) {
-            std::cout << "   " << j+1 << " - " << tasks[i].subtasks[j] << " " << mark << std::endl;
+            std::string submark = tasks[i].subtasks[j].done ? "[x]" : "[ ]";
+            std::cout << "   " << j+1 << " - " << tasks[i].subtasks[j].text << " " << submark << std::endl;
         }
     }
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
@@ -46,7 +51,7 @@ void saveTask(std::vector<Task>& tasks) {
         if(!t.subtasks.empty()) {
             file << "|";
             for(size_t i = 0; i < t.subtasks.size(); ++i) {
-                file << t.subtasks[i];
+                file << t.subtasks[i].text << ":" << t.subtasks[i].done;
                 if(i+1 < t.subtasks.size()) file << ",";
             }
         }
@@ -59,41 +64,62 @@ void doneTask(std::vector<Task>& tasks){
         std::cout << "Which task is done? (press 'x' to exit)\n>> ";
         std::string input;
         std::getline(std::cin, input);
-        char ch = input[0];
-        if(ch == 'x'|| ch == 'X') {
-            break;
-        }else {
-            if(input.empty()) {
-                std::cout << "You did not write anything" << std::endl;
-                continue;
-            }else {
-                if(isNumber(input)) {
-                    int iinput = stoi(input);
-                    int index = iinput - 1;
-                    if(index >= 0 && index < tasks.size()) {
-                        if(tasks[index].done) {
-                            std::cout << "Your tasks are done!" << std::endl;
-                            break;
-                        } else {
-                            tasks[index].done = true;
-                            saveTask(tasks);
-                            std::cout << "Cool!" << std::endl;
-                            break;
-                        }
+        if(input == "x" || input == "X") break;
+        if(input.empty()) {
+            std::cout << "You did not write anything" << std::endl;
+            continue;
+        }
+        if(!isNumber(input)) {
+            std::cout << "That's not a number." << std::endl;
+            continue;
+        }            
+        int index = stoi(input) - 1;
+        if(index < 0 || index >= tasks.size()) {
+            std::cout << "Enter the valid number." << std::endl;
+            continue;
+        }      
+        if(!tasks[index].subtasks.empty()) {
+            std::cout << "What is done?\n a) task\n b) subtask\n>> ";
+            std::string choice;
+            getline(std::cin, choice);
+            if(choice == "a" || choice == "A") {
+                if(!tasks[index].done) {
+                    tasks[index].done = true;
+                    for(size_t i = 0; i < tasks[index].subtasks.size(); ++i) {
+                        tasks[index].subtasks[i].done = true;
                     }
-                    else {
-                        std::cout << "Enter the valid number." << std::endl;
-                        continue;
-                    }
+                    saveTask(tasks);
+                    std::cout << "Done!" << std::endl;                   
+                }else {
+                    std::cout << "Your tasks are done!" << std::endl;
                 }
-                else {
-                    std::cout << "That's not a number." << std::endl;
+               
+            }else if(choice == "b" || choice == "B") {
+                for(size_t i = 0; i < tasks[index].subtasks.size(); ++i) {
+                    std::string submark = tasks[index].subtasks[i].done ? "[x]" : "[ ]";
+                    std::cout << i+1 << ". " << tasks[index].subtasks[i].text << " " << submark << std::endl;
+                }
+                std::cout << "Which subtask is done?\n>> ";
+                std::string subinput;
+                getline(std::cin, subinput);
+                if(!isNumber(subinput)) {
+                    std::cout << "That's not a number" << std::endl;
                     continue;
                 }
+                int subindex = stoi(subinput) - 1;
+                if(subindex < 0 || subindex >= (int)tasks[index].subtasks.size()) {
+                    std::cout << "Enter the valid number." << std::endl;
+                    continue;
+                }
+                tasks[index].subtasks[subindex].done = true;
+                saveTask(tasks);
+                std::cout << "Subtask is done." << std::endl;
             }
         }
-
-    }  
+        tasks[index].done = true;
+        saveTask(tasks);
+        std::cout << "Done!" << std::endl; 
+    }
 }
 std::vector<Task> loadTasks() {
     std::vector<Task> tasks;
@@ -118,7 +144,13 @@ std::vector<Task> loadTasks() {
             std::stringstream ss(subtasksPart);
             std::string sub;
             while(getline(ss, sub, ',')) {
-                if(!sub.empty()) t.subtasks.push_back(sub);
+                if(!sub.empty()) {
+                    Subtask st;                  
+                    size_t sep = sub.find(':');
+                    st.text = sub.substr(0, sep);
+                    st.done = (sub.substr(sep + 1) == "1");
+                    t.subtasks.push_back(st);
+                }
             }
         }
         tasks.push_back(t);
@@ -142,8 +174,11 @@ void taskfolder(std::vector<Task>& tasks) {
         if(sub.empty()) {
             std::cout << "Enter the subtask." << std::endl;
             continue;
-        }else
-        t.subtasks.push_back(sub);
+        }
+        Subtask st;
+        st.text = sub;
+        st.done = false;
+        t.subtasks.push_back(st);
     }
     tasks.push_back(t);
     saveTask(tasks);
@@ -165,15 +200,18 @@ void addTs(std::vector<Task>& tasks) {
         if(input == "a" || input == "A") {
             Task t;
             t.done = false;
-            std::cout << "Task name:\n>> ";
+            while(true) {
+            std::cout << "Task name (press 'x' to exit.)\n>> ";
             getline(std::cin, t.text);
+            if(t.text == "x" || t.text == "X") break;
             if(t.text.empty()){
                 std::cout << "Enter the task." << std::endl;
                 continue;
             }
             tasks.push_back(t);
-            saveTask(tasks);
-            break;
+            saveTask(tasks);               
+            }
+
         }else
         if(input == "b" || input == "B") {
             taskfolder(tasks);
@@ -188,7 +226,7 @@ void deleteTask(std::vector<Task>& tasks) {
     }
     while(true) {
         Tasks(tasks);
-        std::cout << "Which task to delete? (Press 'x' to exit)\n>> " << std::endl;
+        std::cout << "Which task to delete? (Press 'x' to exit)\n>> ";
         std::string input;
         getline(std::cin, input);
         if(input == "x" || input == "X") break;
@@ -209,14 +247,9 @@ void deleteTask(std::vector<Task>& tasks) {
             std::cout << "Delete:\n a) whole task\n b) subtask\n>> ";
             std::string choice;
             getline(std::cin, choice);
-            if(choice == "a" || choice == "A") {
-                tasks.erase(tasks.begin() + index);
-                saveTask(tasks);
-                std::cout << "Task deleted." << std::endl;
-                break;
-            }else if(choice == "b" || choice == "B") {
+            if(choice == "b" || choice == "B") {
                 for(size_t i = 0; i < tasks[index].subtasks.size(); ++i) {
-                    std::cout << i+1 << ". " << tasks[index].subtasks[i] << std::endl;
+                    std::cout << i+1 << ". " << tasks[index].subtasks[i].text << std::endl;
                 }
                 std::cout << "Which subtask to delete?\n>> ";
                 std::string subinput;
@@ -239,7 +272,6 @@ void deleteTask(std::vector<Task>& tasks) {
         tasks.erase(tasks.begin() + index);
         saveTask(tasks);
         std::cout << "Task deleted." << std::endl;
-        break;
     }  
 }
 

@@ -2,10 +2,12 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
 
 struct Task {
     std::string text;
     bool done;
+    std::vector<std::string> subtasks;
 };
 bool isNumber(const std::string& s) {
     if(s.empty()) {
@@ -29,10 +31,10 @@ void Menu() {
 void Tasks(const std::vector<Task>& tasks) {
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
     for(size_t i = 0; i < tasks.size(); ++i) {
-        if(tasks[i].done) {
-            std::cout << i + 1 << ". [x] " << tasks[i].text << std::endl;
-        } else {
-            std::cout << i + 1 << ". [ ] " << tasks[i].text << std::endl;
+        std::string mark = tasks[i].done ? "[x]" : "[ ]";
+        std::cout << i+1 << ". " << mark << " " << tasks[i].text << std::endl;
+        for(size_t j = 0; j < tasks[i].subtasks.size(); ++j) {
+            std::cout << "   " << j+1 << " - " << tasks[i].subtasks[j] << " " << mark << std::endl;
         }
     }
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+" << std::endl;
@@ -40,7 +42,15 @@ void Tasks(const std::vector<Task>& tasks) {
 void saveTask(std::vector<Task>& tasks) {
     std::ofstream file("tasks.txt");
     for(const Task& t : tasks) {
-        file << t.text << "|" << t.done << std::endl;
+        file << t.text << "|" << t.done;
+        if(!t.subtasks.empty()) {
+            file << "|";
+            for(size_t i = 0; i < t.subtasks.size(); ++i) {
+                file << t.subtasks[i];
+                if(i+1 < t.subtasks.size()) file << ",";
+            }
+        }
+        file << "\n";
     }
 }
 void doneTask(std::vector<Task>& tasks){
@@ -92,89 +102,144 @@ std::vector<Task> loadTasks() {
 
     while(getline(file, line)) {
         Task t;
-        size_t pos = line.find('|');
-        if(pos != std::string::npos) {
-            t.text = line.substr(0, pos);
-            std::string donePart = line.substr(pos + 1);
-            if(donePart == "1") {
-                t.done = true;
-            } else {
-                t.done = false;
-            }
-        } else {
+        size_t pos1 = line.find('|');
+        if(pos1 == std::string::npos) {
             t.text = line;
             t.done = false;
+            tasks.push_back(t);
+            continue;
+        }
+        t.text = line.substr(0, pos1);
+        size_t pos2 = line.find('|', pos1 + 1);
+        std::string donePart = line.substr(pos1 + 1, pos2 - pos1 - 1);
+        t.done = (donePart == "1");
+        if(pos2 != std::string::npos) {
+            std::string subtasksPart = line.substr(pos2 + 1);
+            std::stringstream ss(subtasksPart);
+            std::string sub;
+            while(getline(ss, sub, ',')) {
+                if(!sub.empty()) t.subtasks.push_back(sub);
+            }
         }
         tasks.push_back(t);
     }
     return tasks;
 }
+void taskfolder(std::vector<Task>& tasks) {
+    Task t;
+    t.done = false;
+    std::cout << "Folder name: ";
+    getline(std::cin, t.text);
+    if(t.text.empty()) {
+        std::cout << "The folder can not be empty." << std::endl;
+        return;
+    }
+    while(true) {    
+        std::string sub;
+        std::cout << "Subtasks (press 'x' to exit.)\n>> ";
+        getline(std::cin, sub);
+        if(sub == "x" || sub == "X") break;
+        if(sub.empty()) {
+            std::cout << "Enter the subtask." << std::endl;
+            continue;
+        }else
+        t.subtasks.push_back(sub);
+    }
+    tasks.push_back(t);
+    saveTask(tasks);
+    std::cout << "Added!" << std::endl;
+}
 void addTs(std::vector<Task>& tasks) {
     std::string input;
     while(true) {
-        std::cout << "----------------\nAdd task. (press 'x' to exit)\n>> ";
+        std::cout << "----------------\nAdd:\n a) task\n b) folder\n(press 'x' to exit)\n>> ";
         getline(std::cin, input);
-        char ch = input[0];
-        if(ch == 'x' || ch == 'X') {
-            break;
-        }else {
-            if(input.empty()) {
-                std::cout << "You did not write the task." << std::endl;
+        if(input.empty()) {
+            std::cout << "You did not write the task." << std::endl;
+            continue;
+        }else 
+        if(isNumber(input)) {
+            std::cout << "That's not a task." << std::endl;
+            continue;
+        }else
+        if(input == "a" || input == "A") {
+            Task t;
+            t.done = false;
+            std::cout << "Task name:\n>> ";
+            getline(std::cin, t.text);
+            if(t.text.empty()){
+                std::cout << "Enter the task." << std::endl;
                 continue;
-            }else 
-            if(isNumber(input)) {
-                std::cout << "That's not a task." << std::endl;
-                continue;
-            }else {
-                Task t;
-                t.text = input;
-                t.done = false;
-                tasks.push_back(t);
-                saveTask(tasks);
-                break;
             }
-        }
-
+            tasks.push_back(t);
+            saveTask(tasks);
+            break;
+        }else
+        if(input == "b" || input == "B") {
+            taskfolder(tasks);
+        }else
+        if(input == "x" || input == "X") break;
     }
 }
 void deleteTask(std::vector<Task>& tasks) {
     std::string input;
     if(tasks.empty()) {
         std::cout << "You do not have tasks." << std::endl;
-    } else {
-        while(true) {
-            Tasks(tasks);
-            std::cout << "Which task do ya wanna delete? (Press 'x' to exit)\n>> " << std::endl;
-            char ch = input[0];
-            std::getline(std::cin, input);
-            if(ch == 'x' || ch == 'X') {
+    }
+    while(true) {
+        Tasks(tasks);
+        std::cout << "Which task to delete? (Press 'x' to exit)\n>> " << std::endl;
+        std::string input;
+        getline(std::cin, input);
+        if(input == "x" || input == "X") break;
+        if(input.empty()) {
+            std::cout << "You did not write the task." << std::endl;
+            continue;
+        }
+        if(!isNumber(input)) {
+            std::cout << "That's not a number." << std::endl;
+            continue;
+        }
+        int index = stoi(input) - 1;
+        if(index < 0 || index >= (int)tasks.size()) {
+            std::cout << "Enter the valid number." << std::endl;
+            continue;
+        }
+        if(!tasks[index].subtasks.empty()) {
+            std::cout << "Delete:\n a) whole task\n b) subtask\n>> ";
+            std::string choice;
+            getline(std::cin, choice);
+            if(choice == "a" || choice == "A") {
+                tasks.erase(tasks.begin() + index);
+                saveTask(tasks);
+                std::cout << "Task deleted." << std::endl;
                 break;
-            }else {
-                if(input.empty()) {
-                    std::cout << "You did not write the task." << std::endl;
-                    continue;
-                }else {
-                    if(isNumber(input)) {
-                        int iinput = stoi(input);
-                        int index = iinput - 1;
-                        if(index >= 0 && index < tasks.size()) {
-                            tasks.erase(tasks.begin() + index);
-                            saveTask(tasks);
-                            std::cout << "Edited!" << std::endl;
-                            break;
-                        }
-                        else {
-                            std::cout << "Enter the valid number." << std::endl;
-                            continue;
-                        } 
-                    }
-                    else {
-                        std::cout << "That's not a number." << std::endl;
-                        continue;
-                    }
+            }else if(choice == "b" || choice == "B") {
+                for(size_t i = 0; i < tasks[index].subtasks.size(); ++i) {
+                    std::cout << i+1 << ". " << tasks[index].subtasks[i] << std::endl;
                 }
+                std::cout << "Which subtask to delete?\n>> ";
+                std::string subinput;
+                getline(std::cin, subinput);
+                if(!isNumber(subinput)) {
+                    std::cout << "That's not a number." << std::endl;
+                    continue;
+                }
+                int subindex = stoi(subinput) - 1;
+                if(subindex < 0 || subindex >= (int)tasks[index].subtasks.size()) {
+                    std::cout << "Enter the valid number." << std::endl;
+                    continue;
+                }
+                tasks[index].subtasks.erase(tasks[index].subtasks.begin() + subindex);
+                saveTask(tasks);
+                std::cout << "Subtask deleted." << std::endl;
+                break;
             }
         }
+        tasks.erase(tasks.begin() + index);
+        saveTask(tasks);
+        std::cout << "Task deleted." << std::endl;
+        break;
     }  
 }
 
@@ -182,10 +247,7 @@ int main() {
     std::cout << "================" << std::endl;
     std::cout << "   TO DO LIST" << std::endl;
     std::cout << "================" << std::endl;
-
-    
     std::vector<Task> tasks = loadTasks();
-
     while(true) {
         Menu();
         std::cout << ">> ";

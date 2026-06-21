@@ -1,18 +1,10 @@
-# TO_DO_LIST
+# TO-DO LIST
 To Do List is a C++ full independent, backend open source project for organization your tasks that attracts with its own readable code, simplicity, low weight and automation.
 
-It provides the modern features for controling your work and functions making your life easier than it was before. This is the huge but simple system that contains fresh file methods.
-
-## Thank you for choosing me! 
+It provides the modern features for controling your work and functions making your life easier than it was before. This is the huge but simple system that contains fresh methods that create, edit and remove files.
 
 # WELCOME TO TO-DO LIST
-ATM focuses on the convenience andhigh functionality of its products. While other ATMs offer only dull, utilitarian features, I invite you to step into the shoes of an IT specialist and run my project via the terminal. The task may seem simple but that's only on paper!
-So, why us? Good question!
-## ATM IS ABOUT:
-- simplicity (some 253 code lines)
-- cross-platform capability (Windows, Linux, Android, whatever.)
-- open source
-
+You as a specialist can test my terminal project. To-Do List is about automation your daily routine! Test it for free.
 
 # QUICK START
 
@@ -66,24 +58,19 @@ sudo apt install git
 Clone the repository.
 ```
 # Bash
-git clone REPOSITORY
+git clone <REPOSITORY>
 ```
 
 ### step 3:
 
-Find the path to the repository.
-```
-# Bash
-find -name "ATM"
-```
 Write this commands
 ```
 # Bash
-cd <YOUR_PATH_TO_ATM>
+cd <YOUR_PATH_TO_TO_DO>
 mkdir build && cd build
 cmake ..
 make
-./ATM
+./TODO
 ```
 *ENJOY!*
 
@@ -135,7 +122,7 @@ git clone <REPOSITORY>
 Write this commands
 ```
 # Bash
-cd <YOUR_PATH_TO_ATM>
+cd <YOUR_PATH_TO_TODO>
 mkdir build
 cd build
 cmake ..
@@ -165,12 +152,12 @@ Follow this commands:
 ```
 # Bash
 git clone <REPOSITORY>
-cd ATM
+cd TO_DO_List
 mkdir build
 cd build
 cmake ..
 make
-./ATM
+./TODO
 ```
 *ENJOY!*
 

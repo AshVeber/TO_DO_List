@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/TODO.dir/link.d CMakeFiles/TODO.dir/src/to_do_list.cpp.o -o TODO

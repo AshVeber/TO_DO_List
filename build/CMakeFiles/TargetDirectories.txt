@@ -1,0 +1,3 @@
+/home/aveber/Desktop/git-projects/TO_DO_List/build/CMakeFiles/TODO.dir
+/home/aveber/Desktop/git-projects/TO_DO_List/build/CMakeFiles/edit_cache.dir
+/home/aveber/Desktop/git-projects/TO_DO_List/build/CMakeFiles/rebuild_cache.dir
